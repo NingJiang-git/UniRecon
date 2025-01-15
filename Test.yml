@@ -1,0 +1,42 @@
+name: ReconPL-UCLA-test
+model_type: ImageRestorationModel2
+scale: 1
+num_gpu: 4 # set num_gpu: 0 for cpu mode
+manual_seed: 10
+
+# dataset and data loader settings
+datasets:
+
+  test:
+    data_file: ./data_info/UCLA_train.txt
+    type: PairedSmriDataset
+    dataroot_gt: /data/ReconPL/UCLA_clean
+    dataroot_lq: /data/ReconPL/UCLA_corrupted
+
+
+# network structures
+network_g:
+  type: DPMRE
+  hin_position_left: 0
+  hin_position_right: 4
+
+path:
+  pretrain_network_g: /data/experiments/UCLA/models/net_g_latest.pth
+  resume_state: ~
+
+# validation settings
+val:
+  save_img: false
+
+  metrics:
+    psnr: 
+      type: calculate_psnr
+    ssim:
+      type: calculate_ssim
+    rmse:
+      type: calculate_rmse
+
+# dist training settings
+dist_params:
+  backend: nccl
+  port: 29500

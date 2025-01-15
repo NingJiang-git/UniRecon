@@ -1,0 +1,97 @@
+name: ReconPL-UCLA
+model_type: ImageRestorationModel2
+scale: 1
+num_gpu: 6
+manual_seed: 3407
+
+datasets:
+  train:
+    data_file: ./data_info/UCLA_train.txt
+    type: PairedSmriDataset
+    dataroot_gt: /data/ReconPL/UCLA_clean
+    dataroot_lq: /data/ReconPL/UCLA_corrupted
+
+    use_flip: false
+    use_rot: false
+
+    # data loader
+    use_shuffle: false
+    num_worker_per_gpu: 4
+    batch_size_per_gpu: 4
+    dataset_enlarge_ratio: 1
+    prefetch_mode: cuda # ataloader for CUDAPrefetcher
+    # prefetch_mode: ~ # Normal dataloader
+
+    pin_memory: true
+
+  val:
+    data_file: ./data_info/UCLA_test.txt
+    type: PairedSmriDataset
+    dataroot_gt: /data/ReconPL/UCLA_clean
+    dataroot_lq: /data/ReconPL/UCLA_corrupted
+
+
+# network structures
+network_g:
+  type: DPMRE
+  hin_position_left: 0
+  hin_position_right: 4
+
+# path
+path:
+  pretrain_network_g: ~
+  strict_load_g: true
+  resume_state: ~
+
+# training settings
+train:
+  optim_g:
+    type: Adam
+    lr: !!float 2e-4
+    weight_decay: 0
+    betas: [0.9, 0.99]
+
+  scheduler:
+    type: TrueCosineAnnealingLR
+    T_max: 200001
+    eta_min: !!float 1e-6
+
+  total_iter: 200001
+  warmup_iter: -1 # no warm up
+
+
+# validation settings
+val:
+  val_freq: 1000
+  save_img: true
+  max_minibatch: 4
+
+  metrics:
+    psnr: # metric name, can be arbitrary
+      type: calculate_psnr
+    ssim:
+      type: calculate_ssim
+    rmse:
+      type: calculate_rmse
+    # uqi:
+    #   type: calculate_uqi
+    # sharpness_M1:
+    #   type: calculate_sharpness_M1    
+    # sharpness_M2:
+    #   type: calculate_sharpness_M2   
+
+
+      
+# logging settings
+logger:
+  print_freq: 1
+  save_checkpoint_freq: 1000
+  use_tb_logger: false
+  wandb:
+    project: ~
+    resume_id: ~
+
+# dist training settings
+dist_params:
+  backend: nccl
+  port: 29500
